@@ -1,0 +1,74 @@
+// LinkedIn Post Generator MVP
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+
+export default function LinkedInPostGenerator() {
+  const [industry, setIndustry] = useState("");
+  const [goal, setGoal] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [post, setPost] = useState("");
+
+  async function generatePost() {
+    setLoading(true);
+    setPost("");
+
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer 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`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional LinkedIn copywriter specialized in personal branding.",
+          },
+          {
+            role: "user",
+            content: `Write a LinkedIn post for someone in the ${industry} industry who wants to ${goal}. Make it engaging, authentic, and 150 words.`,
+          },
+        ],
+      }),
+    });
+
+    const data = await res.json();
+    setPost(data.choices?.[0]?.message?.content || "No result.");
+    setLoading(false);
+  }
+
+  return (
+    <div className="max-w-xl mx-auto p-4 space-y-4">
+      <h1 className="text-2xl font-bold">LinkedIn Post Generator</h1>
+      <Input
+        placeholder="Your industry (e.g. software engineering)"
+        value={industry}
+        onChange={(e) => setIndustry(e.target.value)}
+      />
+      <Input
+        placeholder="Your goal (e.g. attract clients, share insights)"
+        value={goal}
+        onChange={(e) => setGoal(e.target.value)}
+      />
+      <Button onClick={generatePost} disabled={loading}>
+        {loading ? "Generating..." : "Generate Post"}
+      </Button>
+      {post && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="mt-4">
+            <CardContent className="p-4 whitespace-pre-wrap">{post}</CardContent>
+          </Card>
+        </motion.div>
+      )}
+    </div>
+  );
+}
